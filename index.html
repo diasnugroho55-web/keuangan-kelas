@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikasi Kas Kelas Modern</title>
+  <title>Manajemen Pembayaran Kelas 7E</title>
   
   <!-- Google Fonts & Tailwind CSS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,19 +50,15 @@
 
   <!-- TOP HEADER -->
   <header class="sticky top-0 z-30 bg-slate-900 text-white shadow-lg border-b border-slate-800">
-    <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+    <div class="max-w-md mx-auto px-5 py-4 flex items-center">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-md">
-          <i class="fas fa-wallet text-white text-lg"></i>
+          <i class="fas fa-file-invoice-dollar text-white text-lg"></i>
         </div>
         <div>
-          <h1 class="text-base font-bold leading-tight">Kas Siswa</h1>
-          <p class="text-[11px] text-slate-400 font-medium">Manajemen Pembayaran Kelas</p>
+          <h1 class="text-base font-bold leading-tight">Pembayaran Kelas 7E</h1>
+          <p class="text-[11px] text-slate-400 font-medium">Manajemen Pembayaran Siswa</p>
         </div>
-      </div>
-      <div class="text-right">
-        <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold block">Total Kas</span>
-        <span id="totalUangKas" class="text-sm font-extrabold text-emerald-400">Rp 0</span>
       </div>
     </div>
   </header>
@@ -212,9 +208,6 @@
   </div>
 
   <script>
-    // -------------------------------------------------------------
-    // DAFTAR SISWA RESMI SESUAI REQUEST USER
-    // -------------------------------------------------------------
     const daftarSiswa = [
       "Adwa Najwa", "Agha Abizar", "Ahza Alvino", "Aili Omi", "Akbar Caesar",
       "AlfaridzyAlifiya", "Anggen", "Jenita", "Chyntia", "Daffa", "Damar",
@@ -228,7 +221,6 @@
     let semuaTransaksi = [];
     let deleteIdTarget = null;
 
-    // Toast Alert
     function showToast(msg, iconClass = "fa-check-circle text-emerald-400") {
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toastMsg');
@@ -246,7 +238,6 @@
       }, 3000);
     }
 
-    // Populate Dropdown Nama Siswa
     function initDropdowns() {
       const formSelect = document.getElementById('namaSiswa');
       const filterSelect = document.getElementById('filterSiswa');
@@ -267,14 +258,12 @@
       });
     }
 
-    // Simpan Ke LocalStorage
     function saveToLocalStorage() {
-      localStorage.setItem('kas_sekolah_data', JSON.stringify(semuaTransaksi));
+      localStorage.setItem('pembayaran_7e_data', JSON.stringify(semuaTransaksi));
     }
 
-    // Load Dari LocalStorage
     function loadFromLocalStorage() {
-      const local = localStorage.getItem('kas_sekolah_data');
+      const local = localStorage.getItem('pembayaran_7e_data');
       if (local) {
         try {
           semuaTransaksi = JSON.parse(local);
@@ -284,7 +273,6 @@
       }
     }
 
-    // Sync Dengan Firebase DB
     async function syncDataWithFirebase() {
       try {
         const res = await fetch(FIREBASE_DB_URL);
@@ -305,17 +293,11 @@
       }
     }
 
-    // Update Semua Tampilan
     function updateUI() {
-      // Hitung Total Uang
-      const total = semuaTransaksi.reduce((acc, curr) => acc + (Number(curr.jumlah) || 0), 0);
-      document.getElementById('totalUangKas').innerText = 'Rp ' + total.toLocaleString('id-ID');
-
       renderTransaksi();
       renderFilterAnak();
     }
 
-    // Render Riwayat
     function renderTransaksi() {
       const container = document.getElementById('listTransaksi');
       const searchInput = document.getElementById('searchTrans');
@@ -337,7 +319,6 @@
         return;
       }
 
-      // Urutkan dari yang terbaru
       const sorted = [...filtered].reverse();
 
       sorted.forEach(t => {
@@ -392,7 +373,6 @@
       });
     }
 
-    // Render Filter Per Anak
     function renderFilterAnak() {
       const select = document.getElementById('filterSiswa');
       const nama = select ? select.value : '';
@@ -432,7 +412,6 @@
       container.classList.remove('hidden');
     }
 
-    // Form Submit Event Handler
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -453,19 +432,15 @@
         waktuInput: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       };
 
-      // Simpan Ke Memori
       semuaTransaksi.push(payload);
       saveToLocalStorage();
       updateUI();
 
-      // Reset Form & Notif
       this.reset();
       showToast("Transaksi Berhasil Disimpan!");
 
-      // Switch ke Tab Riwayat
       switchTab('transaksi');
 
-      // Async Simpan ke Firebase
       try {
         await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${idBaru}.json`, {
           method: 'PUT',
@@ -477,7 +452,6 @@
       }
     });
 
-    // Ubah Status Transaksi
     async function ubahStatus(id, statusBaru) {
       const target = semuaTransaksi.find(t => t.id === id);
       if (target) {
@@ -495,7 +469,6 @@
       }
     }
 
-    // Modal Hapus Handler
     function openDeleteModal(id, nama) {
       deleteIdTarget = id;
       document.getElementById('deleteTargetText').innerText = `Hapus transaksi milik "${nama}"?`;
@@ -527,7 +500,6 @@
       }
     });
 
-    // Tab Navigation Logic
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById('tab-' + tabName).classList.remove('hidden');
@@ -544,7 +516,6 @@
       }
     }
 
-    // Attach Event Listeners
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         switchTab(this.getAttribute('data-tab'));
@@ -554,7 +525,6 @@
     document.getElementById('searchTrans').addEventListener('keyup', renderTransaksi);
     document.getElementById('filterSiswa').addEventListener('change', renderFilterAnak);
 
-    // Initialization
     window.addEventListener('DOMContentLoaded', () => {
       initDropdowns();
       loadFromLocalStorage();
