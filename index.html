@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Kas Kelas Modern</title>
+  
+  <!-- Google Fonts & Tailwind CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .nav-btn.active {
+      color: #4f46e5;
+      position: relative;
+    }
+    .nav-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 3px;
+      background-color: #4f46e5;
+      border-radius: 99px;
+    }
+    .toast-animate {
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUp {
+      from { transform: translate(-50%, 100%); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased pb-28">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 bg-slate-900 text-white shadow-lg border-b border-slate-800">
+    <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-md">
+          <i class="fas fa-wallet text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-tight">Kas Siswa</h1>
+          <p class="text-[11px] text-slate-400 font-medium">Manajemen Pembayaran Kelas</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold block">Total Kas</span>
+        <span id="totalUangKas" class="text-sm font-extrabold text-emerald-400">Rp 0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-md mx-auto px-4 pt-5">
+
+    <!-- TAB 1: FORM INPUT TRANSAKSI -->
+    <section id="tab-input" class="tab-content">
+      <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-indigo-600 mr-2"></span>
+            Catat Pembayaran Baru
+          </h2>
+          <span class="text-[11px] bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-semibold">Form Input</span>
+        </div>
+
+        <form id="formBayar" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Siswa</label>
+            <div class="relative">
+              <select id="namaSiswa" required class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none appearance-none">
+                <option value="">-- Pilih Nama Siswa --</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Keperluan Pembayaran</label>
+            <div class="relative">
+              <select id="keperluan" required class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none appearance-none">
+                <option value="">-- Pilih Keperluan --</option>
+                <option value="SPP">SPP</option>
+                <option value="Study Tour">Study Tour</option>
+                <option value="LKS">LKS</option>
+                <option value="Buku 7KAIH">Buku 7KAIH</option>
+                <option value="Kalender">Kalender</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jumlah Uang (Rp)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">Rp</span>
+              <input type="number" id="jumlah" required placeholder="0" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jam / Waktu Transfer</label>
+            <input type="text" id="waktuTransfer" placeholder="Misal: 10:15 WIB / Kemarin" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Catatan Tambahan (Opsional)</label>
+            <input type="text" id="catatan" placeholder="Nomor kuitansi / info tambahan..." class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
+          </div>
+
+          <button type="submit" id="btnSimpan" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center space-x-2">
+            <i class="fas fa-paper-plane"></i>
+            <span>Simpan Transaksi</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 2: RIWAYAT TRANSAKSI -->
+    <section id="tab-transaksi" class="tab-content hidden space-y-3">
+      <div class="relative">
+        <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+        <input type="text" id="searchTrans" placeholder="Cari nama siswa atau keperluan..." class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+      </div>
+
+      <div id="listTransaksi" class="space-y-3"></div>
+    </section>
+
+    <!-- TAB 3: FILTER PER ANAK -->
+    <section id="tab-filter" class="tab-content hidden space-y-4">
+      <div class="glass-card rounded-2xl p-4 shadow-sm">
+        <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Nama Siswa:</label>
+        <div class="relative">
+          <select id="filterSiswa" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none">
+            <option value="">-- Pilih Nama Siswa --</option>
+          </select>
+          <i class="fas fa-chevron-down absolute right-3 top-3 text-slate-400 text-xs pointer-events-none"></i>
+        </div>
+      </div>
+
+      <div id="rekapAnakContainer" class="hidden space-y-3">
+        <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
+          <div>
+            <h3 id="rekapNamaAnak" class="font-extrabold text-sm text-indigo-200"></h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Rekapitulasi Pembayaran Siswa</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Lunas</span>
+            <span id="rekapTotalSiswa" class="text-xs font-bold text-emerald-400">Rp 0</span>
+          </div>
+        </div>
+
+        <div id="listRekapAnak" class="space-y-2"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50">
+    <div class="max-w-md mx-auto flex justify-around py-2.5">
+      <button type="button" data-tab="input" class="nav-btn active flex flex-col items-center text-slate-400 text-[11px] font-bold cursor-pointer transition">
+        <i class="fas fa-plus-circle text-base mb-1"></i> Input
+      </button>
+      <button type="button" data-tab="transaksi" class="nav-btn flex flex-col items-center text-slate-400 text-[11px] font-bold cursor-pointer transition">
+        <i class="fas fa-receipt text-base mb-1"></i> Riwayat
+      </button>
+      <button type="button" data-tab="filter" class="nav-btn flex flex-col items-center text-slate-400 text-[11px] font-bold cursor-pointer transition">
+        <i class="fas fa-user-check text-base mb-1"></i> Per Anak
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL KONFIRMASI HAPUS -->
+  <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-500">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+      </div>
+      <div class="text-center">
+        <h3 class="text-sm font-bold text-slate-800">Hapus Transaksi?</h3>
+        <p id="deleteTargetText" class="text-xs text-slate-500 mt-1">Data yang dihapus tidak dapat dikembalikan.</p>
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button id="btnCancelDelete" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">Batal</button>
+        <button id="btnConfirmDelete" class="w-1/2 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFIKASI -->
+  <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg z-50 hidden items-center space-x-2">
+    <i id="toastIcon" class="fas fa-check-circle text-emerald-400"></i>
+    <span id="toastMsg">Berhasil!</span>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // DAFTAR SISWA RESMI SESUAI REQUEST USER
+    // -------------------------------------------------------------
+    const daftarSiswa = [
+      "Adwa Najwa", "Agha Abizar", "Ahza Alvino", "Aili Omi", "Akbar Caesar",
+      "AlfaridzyAlifiya", "Anggen", "Jenita", "Chyntia", "Daffa", "Damar",
+      "Deshifa Zhahira", "Earlita", "Elang", "Fakhira", "Fernando", "Gandes",
+      "Juvendio", "Kenzy", "Luthfia", "M. Gavin", "M. Rizqi", "Naira",
+      "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
+    ];
+
+    const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi.json";
+
+    let semuaTransaksi = [];
+    let deleteIdTarget = null;
+
+    // Toast Alert
+    function showToast(msg, iconClass = "fa-check-circle text-emerald-400") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+      
+      toastMsg.innerText = msg;
+      toastIcon.className = "fas " + iconClass;
+      
+      toast.classList.remove('hidden');
+      toast.classList.add('flex', 'toast-animate');
+      
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex', 'toast-animate');
+      }, 3000);
+    }
+
+    // Populate Dropdown Nama Siswa
+    function initDropdowns() {
+      const formSelect = document.getElementById('namaSiswa');
+      const filterSelect = document.getElementById('filterSiswa');
+
+      formSelect.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
+      filterSelect.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
+
+      daftarSiswa.forEach(nama => {
+        const opt1 = document.createElement('option');
+        opt1.value = nama;
+        opt1.textContent = nama;
+        formSelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = nama;
+        opt2.textContent = nama;
+        filterSelect.appendChild(opt2);
+      });
+    }
+
+    // Simpan Ke LocalStorage
+    function saveToLocalStorage() {
+      localStorage.setItem('kas_sekolah_data', JSON.stringify(semuaTransaksi));
+    }
+
+    // Load Dari LocalStorage
+    function loadFromLocalStorage() {
+      const local = localStorage.getItem('kas_sekolah_data');
+      if (local) {
+        try {
+          semuaTransaksi = JSON.parse(local);
+        } catch(e) {
+          semuaTransaksi = [];
+        }
+      }
+    }
+
+    // Sync Dengan Firebase DB
+    async function syncDataWithFirebase() {
+      try {
+        const res = await fetch(FIREBASE_DB_URL);
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            const remoteTrans = [];
+            Object.keys(data).forEach(key => {
+              remoteTrans.push({ id: key, ...data[key] });
+            });
+            semuaTransaksi = remoteTrans;
+            saveToLocalStorage();
+            updateUI();
+          }
+        }
+      } catch (err) {
+        console.warn("Offline / Gagal konek Firebase, menggunakan data lokal.");
+      }
+    }
+
+    // Update Semua Tampilan
+    function updateUI() {
+      // Hitung Total Uang
+      const total = semuaTransaksi.reduce((acc, curr) => acc + (Number(curr.jumlah) || 0), 0);
+      document.getElementById('totalUangKas').innerText = 'Rp ' + total.toLocaleString('id-ID');
+
+      renderTransaksi();
+      renderFilterAnak();
+    }
+
+    // Render Riwayat
+    function renderTransaksi() {
+      const container = document.getElementById('listTransaksi');
+      const searchInput = document.getElementById('searchTrans');
+      const keyword = searchInput ? searchInput.value.toLowerCase() : '';
+
+      container.innerHTML = '';
+
+      const filtered = semuaTransaksi.filter(t => 
+        (t.namaSiswa && t.namaSiswa.toLowerCase().includes(keyword)) ||
+        (t.keperluan && t.keperluan.toLowerCase().includes(keyword))
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-400">
+            <i class="fas fa-inbox text-4xl mb-2"></i>
+            <p class="text-xs">Belum ada riwayat transaksi.</p>
+          </div>`;
+        return;
+      }
+
+      // Urutkan dari yang terbaru
+      const sorted = [...filtered].reverse();
+
+      sorted.forEach(t => {
+        let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+        if (t.status === 'Sudah Upload' || t.status === 'Sudah Diambil' || t.status === 'Lunas') {
+          badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        }
+
+        let nextActionText = '';
+        let nextStatusVal = '';
+        if (t.status === 'Belum Upload') {
+          nextActionText = 'Tandai Upload';
+          nextStatusVal = 'Sudah Upload';
+        } else if (t.status === 'Belum Diambil') {
+          nextActionText = 'Tandai Diambil';
+          nextStatusVal = 'Sudah Diambil';
+        }
+
+        const card = document.createElement('div');
+        card.className = "glass-card rounded-2xl p-4 shadow-sm space-y-2 border border-slate-100 transition hover:shadow-md";
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="font-extrabold text-slate-800 text-xs">${t.namaSiswa}</h4>
+              <span class="inline-block px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-600 rounded-md mt-1">${t.keperluan}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-indigo-600 text-xs block">Rp ${(Number(t.jumlah) || 0).toLocaleString('id-ID')}</span>
+              <button type="button" onclick="openDeleteModal('${t.id}', '${t.namaSiswa}')" class="text-red-400 hover:text-red-600 text-[11px] mt-1 font-semibold transition cursor-pointer">
+                <i class="fas fa-trash-alt mr-0.5"></i> Hapus
+              </button>
+            </div>
+          </div>
+          
+          <div class="text-[10px] text-slate-400 flex justify-between font-medium pt-1">
+            <span><i class="far fa-clock mr-1"></i>TF: ${t.waktuTransfer || '-'}</span>
+            <span>Input: ${t.waktuInput || '-'}</span>
+          </div>
+
+          ${t.catatan ? `<p class="text-[10px] text-slate-400 italic">Catatan: ${t.catatan}</p>` : ''}
+
+          <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+            <span class="text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${badgeColor}">${t.status}</span>
+            ${nextActionText ? `
+              <button type="button" onclick="ubahStatus('${t.id}', '${nextStatusVal}')" class="text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg shadow-sm transition cursor-pointer">
+                <i class="fas fa-check-circle mr-1"></i> ${nextActionText}
+              </button>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Render Filter Per Anak
+    function renderFilterAnak() {
+      const select = document.getElementById('filterSiswa');
+      const nama = select ? select.value : '';
+      const container = document.getElementById('rekapAnakContainer');
+      const listContainer = document.getElementById('listRekapAnak');
+
+      if (!nama) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      const siswaTrans = semuaTransaksi.filter(t => t.namaSiswa === nama);
+      let totalSiswa = 0;
+
+      document.getElementById('rekapNamaAnak').innerText = nama;
+      listContainer.innerHTML = '';
+
+      if (siswaTrans.length === 0) {
+        listContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada riwayat transaksi untuk siswa ini.</p>';
+      } else {
+        siswaTrans.forEach(t => {
+          totalSiswa += Number(t.jumlah || 0);
+          const item = document.createElement('div');
+          item.className = "bg-white p-3 rounded-xl border border-slate-200 text-xs flex justify-between items-center shadow-sm";
+          item.innerHTML = `
+            <div>
+              <p class="font-extrabold text-slate-800">${t.keperluan} <span class="font-normal text-slate-400">(${t.waktuTransfer})</span></p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Status: <b class="text-indigo-600">${t.status}</b></p>
+            </div>
+            <span class="font-bold text-slate-700">Rp ${(Number(t.jumlah) || 0).toLocaleString('id-ID')}</span>
+          `;
+          listContainer.appendChild(item);
+        });
+      }
+
+      document.getElementById('rekapTotalSiswa').innerText = 'Rp ' + totalSiswa.toLocaleString('id-ID');
+      container.classList.remove('hidden');
+    }
+
+    // Form Submit Event Handler
+    document.getElementById('formBayar').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const keperluan = document.getElementById('keperluan').value;
+      let statusAksi = 'Belum Diambil';
+      if (keperluan === 'SPP') statusAksi = 'Belum Upload';
+      else if (keperluan === 'Study Tour') statusAksi = 'Lunas';
+
+      const idBaru = 'tr_' + Date.now();
+      const payload = {
+        id: idBaru,
+        namaSiswa: document.getElementById('namaSiswa').value,
+        keperluan: keperluan,
+        jumlah: Number(document.getElementById('jumlah').value),
+        waktuTransfer: document.getElementById('waktuTransfer').value,
+        catatan: document.getElementById('catatan').value,
+        status: statusAksi,
+        waktuInput: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      // Simpan Ke Memori
+      semuaTransaksi.push(payload);
+      saveToLocalStorage();
+      updateUI();
+
+      // Reset Form & Notif
+      this.reset();
+      showToast("Transaksi Berhasil Disimpan!");
+
+      // Switch ke Tab Riwayat
+      switchTab('transaksi');
+
+      // Async Simpan ke Firebase
+      try {
+        await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${idBaru}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch(err) {
+        console.warn("Gagal simpan ke cloud, tersimpan di lokal.");
+      }
+    });
+
+    // Ubah Status Transaksi
+    async function ubahStatus(id, statusBaru) {
+      const target = semuaTransaksi.find(t => t.id === id);
+      if (target) {
+        target.status = statusBaru;
+        saveToLocalStorage();
+        updateUI();
+        showToast(`Status diubah jadi '${statusBaru}'`);
+
+        try {
+          await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${id}/status.json`, {
+            method: 'PUT',
+            body: JSON.stringify(statusBaru)
+          });
+        } catch(e) {}
+      }
+    }
+
+    // Modal Hapus Handler
+    function openDeleteModal(id, nama) {
+      deleteIdTarget = id;
+      document.getElementById('deleteTargetText').innerText = `Hapus transaksi milik "${nama}"?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    document.getElementById('btnCancelDelete').addEventListener('click', () => {
+      document.getElementById('deleteModal').classList.add('hidden');
+      deleteIdTarget = null;
+    });
+
+    document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+      if (deleteIdTarget) {
+        semuaTransaksi = semuaTransaksi.filter(t => t.id !== deleteIdTarget);
+        saveToLocalStorage();
+        updateUI();
+
+        const targetId = deleteIdTarget;
+        deleteIdTarget = null;
+
+        document.getElementById('deleteModal').classList.add('hidden');
+        showToast("Transaksi Berhasil Dihapus", "fa-trash-alt text-red-400");
+
+        try {
+          await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${targetId}.json`, {
+            method: 'DELETE'
+          });
+        } catch(e) {}
+      }
+    });
+
+    // Tab Navigation Logic
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-indigo-600');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('active', 'text-indigo-600');
+      }
+    }
+
+    // Attach Event Listeners
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        switchTab(this.getAttribute('data-tab'));
+      });
+    });
+
+    document.getElementById('searchTrans').addEventListener('keyup', renderTransaksi);
+    document.getElementById('filterSiswa').addEventListener('change', renderFilterAnak);
+
+    // Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      initDropdowns();
+      loadFromLocalStorage();
+      updateUI();
+      syncDataWithFirebase();
+    });
+  </script>
+</body>
+</html>
