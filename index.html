@@ -208,6 +208,7 @@
   </div>
 
   <script>
+    // Master Daftar Nama 30 Siswa
     const daftarSiswa = [
       "Adwa Najwa", "Agha Abizar", "Ahza Alvino", "Aili Omi", "Akbar Caesar",
       "AlfaridzyAlifiya", "Anggen", "Jenita", "Chyntia", "Daffa", "Damar",
@@ -216,11 +217,12 @@
       "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
     ];
 
-    const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi.json";
+    const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi";
 
     let semuaTransaksi = [];
     let deleteIdTarget = null;
 
+    // Toast Alert
     function showToast(msg, iconClass = "fa-check-circle text-emerald-400") {
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toastMsg');
@@ -238,6 +240,7 @@
       }, 3000);
     }
 
+    // Populate Dropdown Nama Siswa
     function initDropdowns() {
       const formSelect = document.getElementById('namaSiswa');
       const filterSelect = document.getElementById('filterSiswa');
@@ -258,6 +261,7 @@
       });
     }
 
+    // Save & Load LocalStorage
     function saveToLocalStorage() {
       localStorage.setItem('pembayaran_7e_data', JSON.stringify(semuaTransaksi));
     }
@@ -273,31 +277,47 @@
       }
     }
 
-    async function syncDataWithFirebase() {
-      try {
-        const res = await fetch(FIREBASE_DB_URL);
-        if (res.ok) {
-          const data = await res.json();
-          if (data) {
-            const remoteTrans = [];
-            Object.keys(data).forEach(key => {
-              remoteTrans.push({ id: key, ...data[key] });
-            });
-            semuaTransaksi = remoteTrans;
-            saveToLocalStorage();
-            updateUI();
+    // Real-Time Listener dengan EventSource (SSE)
+    function syncDataWithFirebase() {
+      const eventSource = new EventSource(`${FIREBASE_DB_URL}.json`);
+
+      eventSource.onmessage = function(event) {
+        if (event.data) {
+          try {
+            const data = JSON.parse(event.data);
+            if (data) {
+              const remoteTrans = [];
+              Object.keys(data).forEach(key => {
+                if (data[key]) {
+                  remoteTrans.push({ id: key, ...data[key] });
+                }
+              });
+              semuaTransaksi = remoteTrans;
+              saveToLocalStorage();
+              updateUI();
+            } else {
+              semuaTransaksi = [];
+              saveToLocalStorage();
+              updateUI();
+            }
+          } catch(e) {
+            console.error("Gagal parse data realtime:", e);
           }
         }
-      } catch (err) {
-        console.warn("Offline / Gagal konek Firebase, menggunakan data lokal.");
-      }
+      };
+
+      eventSource.onerror = function() {
+        console.warn("Koneksi realtime Firebase bermasalah, menggunakan data lokal.");
+      };
     }
 
+    // Update Semua Tampilan UI
     function updateUI() {
       renderTransaksi();
       renderFilterAnak();
     }
 
+    // Render Riwayat
     function renderTransaksi() {
       const container = document.getElementById('listTransaksi');
       const searchInput = document.getElementById('searchTrans');
@@ -373,6 +393,7 @@
       });
     }
 
+    // Render Filter Per Anak
     function renderFilterAnak() {
       const select = document.getElementById('filterSiswa');
       const nama = select ? select.value : '';
@@ -412,6 +433,7 @@
       container.classList.remove('hidden');
     }
 
+    // Submit Transaksi Baru
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -438,11 +460,10 @@
 
       this.reset();
       showToast("Transaksi Berhasil Disimpan!");
-
       switchTab('transaksi');
 
       try {
-        await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${idBaru}.json`, {
+        await fetch(`${FIREBASE_DB_URL}/${idBaru}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -452,6 +473,7 @@
       }
     });
 
+    // Ubah Status Transaksi
     async function ubahStatus(id, statusBaru) {
       const target = semuaTransaksi.find(t => t.id === id);
       if (target) {
@@ -461,7 +483,7 @@
         showToast(`Status diubah jadi '${statusBaru}'`);
 
         try {
-          await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${id}/status.json`, {
+          await fetch(`${FIREBASE_DB_URL}/${id}/status.json`, {
             method: 'PUT',
             body: JSON.stringify(statusBaru)
           });
@@ -469,6 +491,7 @@
       }
     }
 
+    // Modal Hapus Transaksi
     function openDeleteModal(id, nama) {
       deleteIdTarget = id;
       document.getElementById('deleteTargetText').innerText = `Hapus transaksi milik "${nama}"?`;
@@ -493,13 +516,14 @@
         showToast("Transaksi Berhasil Dihapus", "fa-trash-alt text-red-400");
 
         try {
-          await fetch(`https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi/${targetId}.json`, {
+          await fetch(`${FIREBASE_DB_URL}/${targetId}.json`, {
             method: 'DELETE'
           });
         } catch(e) {}
       }
     });
 
+    // Tab Navigation Logic
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById('tab-' + tabName).classList.remove('hidden');
@@ -525,6 +549,7 @@
     document.getElementById('searchTrans').addEventListener('keyup', renderTransaksi);
     document.getElementById('filterSiswa').addEventListener('change', renderFilterAnak);
 
+    // Initial Load
     window.addEventListener('DOMContentLoaded', () => {
       initDropdowns();
       loadFromLocalStorage();
