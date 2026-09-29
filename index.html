@@ -244,7 +244,8 @@
       "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
     ];
 
-    const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.firebaseio.com/transaksi";
+    // URL RESMI FIREBASE SINGAPORE ANDA
+    const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.asia-southeast1.firebasedatabase.app/transaksi";
 
     let semuaTransaksi = [];
     let deleteIdTarget = null;
@@ -417,7 +418,6 @@
       });
     }
 
-    // Render Filter Rekap Per Anak
     function renderFilterAnak() {
       const select = document.getElementById('filterSiswa');
       const nama = select ? select.value : '';
@@ -464,7 +464,6 @@
           listContainer.appendChild(item);
         });
 
-        // Hitung Kekurangan Study Tour
         studyTourCard.classList.remove('hidden');
         studyTourBayarLabel.innerText = `Rp ${totalStudyTour.toLocaleString('id-ID')} / Rp ${BIAYA_STUDY_TOUR.toLocaleString('id-ID')}`;
 
@@ -488,7 +487,6 @@
       container.classList.remove('hidden');
     }
 
-    // Submit Form
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
