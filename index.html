@@ -136,7 +136,7 @@
 
           <button type="submit" id="btnSimpan" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center space-x-2">
             <i class="fas fa-paper-plane"></i>
-            <span>Simpan Transaksi</span>
+            <span>Simpan & Upload Ke Firebase</span>
           </button>
         </form>
       </div>
@@ -216,7 +216,7 @@
       </div>
       <div class="text-center">
         <h3 class="text-sm font-bold text-slate-800">Hapus Transaksi?</h3>
-        <p id="deleteTargetText" class="text-xs text-slate-500 mt-1">Data yang dihapus tidak dapat dikembalikan.</p>
+        <p id="deleteTargetText" class="text-xs text-slate-500 mt-1">Data yang dihapus dari cloud tidak dapat dikembalikan.</p>
       </div>
       <div class="flex space-x-2 pt-2">
         <button id="btnCancelDelete" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">Batal</button>
@@ -242,7 +242,7 @@
       "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
     ];
 
-    // ALAMAT SINGAPORE FIREBASE RESMI ANDA
+    // ALAMAT SINGAPORE FIREBASE RESMI
     const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.asia-southeast1.firebasedatabase.app/transaksi";
 
     let semuaTransaksi = [];
@@ -285,36 +285,32 @@
       });
     }
 
-    // Mendengarkan perubahan Firebase secara Real-Time (Dua Arah)
-    function syncDataWithFirebase() {
-      const eventSource = new EventSource(`${FIREBASE_DB_URL}.json`);
-
-      eventSource.onmessage = function(event) {
-        if (event.data) {
-          try {
-            const data = JSON.parse(event.data);
-            if (data) {
-              const remoteTrans = [];
-              Object.keys(data).forEach(key => {
-                if (data[key]) {
-                  remoteTrans.push({ id: key, ...data[key] });
-                }
-              });
-              semuaTransaksi = remoteTrans;
-              updateUI();
-            } else {
-              semuaTransaksi = [];
-              updateUI();
-            }
-          } catch(e) {
-            console.error("Gagal parse data realtime:", e);
+    // Mengambil data murni langsung dari Cloud Firebase (Tanpa LocalStorage)
+    async function fetchFromFirebase() {
+      try {
+        const res = await fetch(`${FIREBASE_DB_URL}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          const remoteTrans = [];
+          if (data) {
+            Object.keys(data).forEach(key => {
+              if (data[key]) {
+                remoteTrans.push({ id: key, ...data[key] });
+              }
+            });
           }
+          semuaTransaksi = remoteTrans;
+          updateUI();
         }
-      };
+      } catch (err) {
+        console.warn("Gagal terhubung ke Cloud Firebase.");
+      }
+    }
 
-      eventSource.onerror = function() {
-        console.warn("Mencoba menghubungkan ulang ke Cloud...");
-      };
+    // Sinkronisasi Real-Time (Setiap 2 detik sinkron otomatis ke semua HP & Laptop)
+    function startRealtimeSync() {
+      fetchFromFirebase();
+      setInterval(fetchFromFirebase, 2000);
     }
 
     function updateUI() {
@@ -338,7 +334,7 @@
         container.innerHTML = `
           <div class="text-center py-12 text-slate-400">
             <i class="fas fa-inbox text-4xl mb-2"></i>
-            <p class="text-xs">Belum ada riwayat transaksi.</p>
+            <p class="text-xs">Belum ada riwayat transaksi di Cloud.</p>
           </div>`;
         return;
       }
@@ -469,13 +465,13 @@
       container.classList.remove('hidden');
     }
 
-    // KIRIM DATA KE FIREBASE LEBIH DULU
+    // UPLOAD LANGSUNG KE FIREBASE (TANPA LOCALSTORAGE)
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const btn = document.getElementById('btnSimpan');
       btn.disabled = true;
-      btn.innerText = "Menyimpan ke Cloud...";
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Mengunggah...`;
 
       const idBaru = 'tr_' + Date.now();
       const payload = {
@@ -498,16 +494,17 @@
 
         if (res.ok) {
           this.reset();
-          showToast("Berhasil Disimpan & Tersinkron!");
+          showToast("Berhasil Disimpan & Terunggah!");
           switchTab('transaksi');
+          await fetchFromFirebase();
         } else {
-          alert("Gagal terhubung ke Firebase. Pastikan Rules Firebase sudah 'true'.");
+          alert("Gagal mengunggah ke Firebase. Pastikan Rules Firebase sudah 'true'.");
         }
       } catch(err) {
-        alert("Gagal menyimpan. Periksa koneksi internet Anda.");
+        alert("Gagal mengunggah. Periksa koneksi internet Anda.");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fas fa-paper-plane"></i> <span>Simpan Transaksi</span>`;
+        btn.innerHTML = `<i class="fas fa-paper-plane"></i> <span>Simpan & Upload Ke Firebase</span>`;
       }
     });
 
@@ -518,6 +515,7 @@
           body: JSON.stringify(statusBaru)
         });
         showToast(`Status diubah jadi '${statusBaru}'`);
+        await fetchFromFirebase();
       } catch(e) {
         alert("Gagal memperbarui status ke cloud.");
       }
@@ -544,7 +542,8 @@
           await fetch(`${FIREBASE_DB_URL}/${targetId}.json`, {
             method: 'DELETE'
           });
-          showToast("Transaksi Dihapus", "fa-trash-alt text-red-400");
+          showToast("Transaksi Dihapus dari Cloud", "fa-trash-alt text-red-400");
+          await fetchFromFirebase();
         } catch(e) {
           alert("Gagal menghapus dari cloud.");
         }
@@ -578,7 +577,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initDropdowns();
-      syncDataWithFirebase();
+      startRealtimeSync();
     });
   </script>
 </body>
