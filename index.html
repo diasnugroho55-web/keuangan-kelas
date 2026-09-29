@@ -165,7 +165,6 @@
       </div>
 
       <div id="rekapAnakContainer" class="hidden space-y-3">
-        <!-- Kartu Header Ringkasan Siswa -->
         <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
           <div>
             <h3 id="rekapNamaAnak" class="font-extrabold text-sm text-indigo-200"></h3>
@@ -177,7 +176,6 @@
           </div>
         </div>
 
-        <!-- Kartu Status Study Tour -->
         <div id="studyTourStatusCard" class="hidden p-4 rounded-2xl border transition-all">
           <div class="flex justify-between items-center">
             <div>
@@ -244,7 +242,7 @@
       "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
     ];
 
-    // URL RESMI FIREBASE SINGAPORE ANDA
+    // ALAMAT SINGAPORE FIREBASE RESMI ANDA
     const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.asia-southeast1.firebasedatabase.app/transaksi";
 
     let semuaTransaksi = [];
@@ -287,21 +285,7 @@
       });
     }
 
-    function saveToLocalStorage() {
-      localStorage.setItem('pembayaran_7e_data', JSON.stringify(semuaTransaksi));
-    }
-
-    function loadFromLocalStorage() {
-      const local = localStorage.getItem('pembayaran_7e_data');
-      if (local) {
-        try {
-          semuaTransaksi = JSON.parse(local);
-        } catch(e) {
-          semuaTransaksi = [];
-        }
-      }
-    }
-
+    // Mendengarkan perubahan Firebase secara Real-Time (Dua Arah)
     function syncDataWithFirebase() {
       const eventSource = new EventSource(`${FIREBASE_DB_URL}.json`);
 
@@ -317,11 +301,9 @@
                 }
               });
               semuaTransaksi = remoteTrans;
-              saveToLocalStorage();
               updateUI();
             } else {
               semuaTransaksi = [];
-              saveToLocalStorage();
               updateUI();
             }
           } catch(e) {
@@ -331,7 +313,7 @@
       };
 
       eventSource.onerror = function() {
-        console.warn("Koneksi realtime Firebase bermasalah, menggunakan data lokal.");
+        console.warn("Mencoba menghubungkan ulang ke Cloud...");
       };
     }
 
@@ -487,57 +469,57 @@
       container.classList.remove('hidden');
     }
 
+    // KIRIM DATA KE FIREBASE LEBIH DULU
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      const keperluan = document.getElementById('keperluan').value;
-      const statusAwal = document.getElementById('statusAwal').value;
+      const btn = document.getElementById('btnSimpan');
+      btn.disabled = true;
+      btn.innerText = "Menyimpan ke Cloud...";
 
       const idBaru = 'tr_' + Date.now();
       const payload = {
         id: idBaru,
         namaSiswa: document.getElementById('namaSiswa').value,
-        keperluan: keperluan,
+        keperluan: document.getElementById('keperluan').value,
         jumlah: Number(document.getElementById('jumlah').value),
         waktuTransfer: document.getElementById('waktuTransfer').value,
         catatan: document.getElementById('catatan').value,
-        status: statusAwal,
+        status: document.getElementById('statusAwal').value,
         waktuInput: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       };
 
-      semuaTransaksi.push(payload);
-      saveToLocalStorage();
-      updateUI();
-
-      this.reset();
-      showToast("Transaksi Berhasil Disimpan!");
-      switchTab('transaksi');
-
       try {
-        await fetch(`${FIREBASE_DB_URL}/${idBaru}.json`, {
+        const res = await fetch(`${FIREBASE_DB_URL}/${idBaru}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
+        if (res.ok) {
+          this.reset();
+          showToast("Berhasil Disimpan & Tersinkron!");
+          switchTab('transaksi');
+        } else {
+          alert("Gagal terhubung ke Firebase. Pastikan Rules Firebase sudah 'true'.");
+        }
       } catch(err) {
-        console.warn("Gagal simpan ke cloud, tersimpan di lokal.");
+        alert("Gagal menyimpan. Periksa koneksi internet Anda.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-paper-plane"></i> <span>Simpan Transaksi</span>`;
       }
     });
 
     async function ubahStatus(id, statusBaru) {
-      const target = semuaTransaksi.find(t => t.id === id);
-      if (target) {
-        target.status = statusBaru;
-        saveToLocalStorage();
-        updateUI();
+      try {
+        await fetch(`${FIREBASE_DB_URL}/${id}/status.json`, {
+          method: 'PUT',
+          body: JSON.stringify(statusBaru)
+        });
         showToast(`Status diubah jadi '${statusBaru}'`);
-
-        try {
-          await fetch(`${FIREBASE_DB_URL}/${id}/status.json`, {
-            method: 'PUT',
-            body: JSON.stringify(statusBaru)
-          });
-        } catch(e) {}
+      } catch(e) {
+        alert("Gagal memperbarui status ke cloud.");
       }
     }
 
@@ -554,21 +536,18 @@
 
     document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
       if (deleteIdTarget) {
-        semuaTransaksi = semuaTransaksi.filter(t => t.id !== deleteIdTarget);
-        saveToLocalStorage();
-        updateUI();
-
         const targetId = deleteIdTarget;
         deleteIdTarget = null;
-
         document.getElementById('deleteModal').classList.add('hidden');
-        showToast("Transaksi Berhasil Dihapus", "fa-trash-alt text-red-400");
 
         try {
           await fetch(`${FIREBASE_DB_URL}/${targetId}.json`, {
             method: 'DELETE'
           });
-        } catch(e) {}
+          showToast("Transaksi Dihapus", "fa-trash-alt text-red-400");
+        } catch(e) {
+          alert("Gagal menghapus dari cloud.");
+        }
       }
     });
 
@@ -599,8 +578,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initDropdowns();
-      loadFromLocalStorage();
-      updateUI();
       syncDataWithFirebase();
     });
   </script>
