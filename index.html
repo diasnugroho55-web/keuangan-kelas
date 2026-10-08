@@ -136,7 +136,7 @@
 
           <button type="submit" id="btnSimpan" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center space-x-2">
             <i class="fas fa-paper-plane"></i>
-            <span>Simpan & Upload</span>
+            <span>Simpan & Upload Ke Firebase</span>
           </button>
         </form>
       </div>
@@ -167,7 +167,10 @@
       <div id="rekapAnakContainer" class="hidden space-y-3">
         <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
           <div>
-            <h3 id="rekapNamaAnak" class="font-extrabold text-sm text-indigo-200"></h3>
+            <div class="flex items-center space-x-2">
+              <h3 id="rekapNamaAnak" class="font-extrabold text-sm text-indigo-200"></h3>
+              <span id="rekapNisAnak" class="text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full font-mono font-bold"></span>
+            </div>
             <p class="text-[11px] text-slate-400 mt-0.5">Rekapitulasi Pembayaran Siswa</p>
           </div>
           <div class="text-right">
@@ -233,20 +236,25 @@
 
   <script>
     const BIAYA_STUDY_TOUR = 1400000;
+    const NIS_AWAL = 11569;
 
     const daftarSiswa = [
       "Adwa Najwa", "Agha Abizar", "Ahza Alvino", "Aili Omi", "Akbar Caesar",
-      "AlfaridzyAlifiya", "Anggen", "Jenita", "Chyntia", "Daffa", "Damar",
+      "Alfaridzy", "Alifiya", "Anggen Jenita", "Chyntia", "Daffa", "Damar",
       "Deshifa Zhahira", "Earlita", "Elang", "Fakhira", "Fernando", "Gandes",
       "Juvendio", "Kenzy", "Luthfia", "M. Gavin", "M. Rizqi", "Naira",
       "Queen Qimora", "Raditya", "Raffael", "Rico", "Syabil", "Syahnaz", "Zainab"
     ];
 
-    // ALAMAT SINGAPORE FIREBASE RESMI
     const FIREBASE_DB_URL = "https://kas-sekolah-70083-default-rtdb.asia-southeast1.firebasedatabase.app/transaksi";
 
     let semuaTransaksi = [];
     let deleteIdTarget = null;
+
+    function getNisByNama(nama) {
+      const idx = daftarSiswa.indexOf(nama);
+      return idx !== -1 ? NIS_AWAL + idx : '-';
+    }
 
     function showToast(msg, iconClass = "fa-check-circle text-emerald-400") {
       const toast = document.getElementById('toast');
@@ -273,19 +281,20 @@
       filterSelect.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
 
       daftarSiswa.forEach(nama => {
+        const nis = getNisByNama(nama);
+
         const opt1 = document.createElement('option');
         opt1.value = nama;
-        opt1.textContent = nama;
+        opt1.textContent = `${nama} (NIS: ${nis})`;
         formSelect.appendChild(opt1);
 
         const opt2 = document.createElement('option');
         opt2.value = nama;
-        opt2.textContent = nama;
+        opt2.textContent = `${nama} (NIS: ${nis})`;
         filterSelect.appendChild(opt2);
       });
     }
 
-    // Mengambil data murni langsung dari Cloud Firebase (Tanpa LocalStorage)
     async function fetchFromFirebase() {
       try {
         const res = await fetch(`${FIREBASE_DB_URL}.json`);
@@ -307,7 +316,6 @@
       }
     }
 
-    // Sinkronisasi Real-Time (Setiap 2 detik sinkron otomatis ke semua HP & Laptop)
     function startRealtimeSync() {
       fetchFromFirebase();
       setInterval(fetchFromFirebase, 2000);
@@ -416,6 +424,7 @@
       let totalStudyTour = 0;
 
       document.getElementById('rekapNamaAnak').innerText = nama;
+      document.getElementById('rekapNisAnak').innerText = 'NIS: ' + getNisByNama(nama);
       listContainer.innerHTML = '';
 
       if (siswaTrans.length === 0) {
@@ -465,7 +474,6 @@
       container.classList.remove('hidden');
     }
 
-    // UPLOAD LANGSUNG KE FIREBASE (TANPA LOCALSTORAGE)
     document.getElementById('formBayar').addEventListener('submit', async function(e) {
       e.preventDefault();
 
